@@ -21,11 +21,16 @@ namespace BooksAPI.Controllers
         [HttpPost]
         public IActionResult Post([FromBody] LoginRequest loginRequest)
         {
-            if (loginRequest.Email.IsNullOrEmpty() || loginRequest.PasswordHash.IsNullOrEmpty()) {
+            if (loginRequest.Email.IsNullOrEmpty() || loginRequest.PasswordHash.IsNullOrEmpty())
+            {
                 return BadRequest("Email and Password are required");
             }
             else
             {
+                if (!IsValidEmail(loginRequest.Email))
+                {
+                    return BadRequest("Invalid email format");
+                }
                 var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
                 var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
@@ -38,6 +43,19 @@ namespace BooksAPI.Controllers
                 var token = new JwtSecurityTokenHandler().WriteToken(Sectoken);
 
                 return Ok(token);
+            }
+        }
+
+        private bool IsValidEmail(string email)
+        {
+            try
+            {
+                var addr = new System.Net.Mail.MailAddress(email);
+                return addr.Address == email;
+            }
+            catch
+            {
+                return false;
             }
         }
     }
